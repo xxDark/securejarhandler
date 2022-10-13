@@ -102,10 +102,15 @@ public class ModuleClassLoader extends ClassLoader {
     protected byte[] getClassBytes(final ModuleReader reader, final ModuleReference ref, final String name) {
         var cname = name.replace('.','/')+".class";
 
+        boolean flag = Thread.interrupted();
         try (var istream = closeHandler(Optional.of(reader).flatMap(LambdaExceptionUtils.rethrowFunction(r->r.open(cname))))) {
             return istream.map(LambdaExceptionUtils.rethrowFunction(InputStream::readAllBytes))
                     .findFirst()
                     .orElseGet(()->new byte[0]);
+        } finally {
+            if (flag) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
